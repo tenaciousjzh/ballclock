@@ -1,3 +1,4 @@
+require 'json'
 
 class BallClock
   @@minTrackCapacity = 4
@@ -19,6 +20,7 @@ class BallClock
     @hourCount = 0
     
     @mode = :reportdays
+    @debug = false
     
     if durationMinutes > 0
       @mode = :reporttracks
@@ -35,6 +37,14 @@ class BallClock
   end
   private :loadBallQueue
 
+  def runClock()
+    if @mode == :reportdays
+      simulateDays()
+    else
+      simulateDuration()
+    end
+  end
+  
   def simulateDays()
     @halfDays = 0
     counter = 0
@@ -48,12 +58,28 @@ class BallClock
     @fullDays = @halfDays / 2
     puts "#{@numBalls} balls cycle for #{@fullDays} days."
   end
-
+  private :simulateDays
+  
+  def simulateDuration()
+    counter = 0
+    for i in 0...@duration
+      ballVal = @ballq.shift
+      minTrack(ballVal)
+      counter += 1
+    end
+    result = {:Min => @minTrack, :FiveMin => @fiveMinTrack, :Hour => @hourTrack, :Main => @ballq}
+    json = result.to_json
+    puts "#{json}"
+  end
+  private :simulateDuration
+  
   def printCounts(ballVal)
-    puts "ballVal: #{ballVal}"
-    puts "minCount: #{@minCount}, fiveMinCount: #{@fiveMinCount}, hourCount: #{@hourCount}"
-    puts "halfDays: #{@halfDays}"
-    puts self
+    if @debug
+      puts "ballVal: #{ballVal}"
+      puts "minCount: #{@minCount}, fiveMinCount: #{@fiveMinCount}, hourCount: #{@hourCount}"
+      puts "halfDays: #{@halfDays}"
+      puts self
+    end
   end
   
   def minTrack(ballVal)
@@ -127,16 +153,9 @@ if __FILE__ == $0
     exit(false)
   end
 
-  if not ARGV[1].nil? and not validInput?(ARGV[1].to_i)
-    puts "The second parameter must be a number between 27 and 127"
-    exit(false)
-  end
-  
   duration = (ARGV[1] || 0).to_i
  
   ballClock = BallClock.new(numBalls, duration)
-  ballClock.simulateDays()
-  
-  puts ballClock
+  ballClock.runClock()
   
 end 
