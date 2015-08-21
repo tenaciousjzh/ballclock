@@ -1,0 +1,2 @@
+#!/bin/bash
+ruby src/ballclock.rb $1 $2 
