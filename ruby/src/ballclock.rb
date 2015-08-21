@@ -5,7 +5,14 @@ class BallClock
   @@fiveMinTrackCapacity = 11
   @@hourTrackCapacity = 11
   
-  def initialize(numBalls, durationMinutes)
+  def initialize(numBalls, durationMinutes = 0)
+    if not Validator.validBallInput?(numBalls)
+      raise ArgumentError, Validator.invalidBallInput, caller
+    end
+    if not Validator.validDuration?(durationMinutes)
+      raise ArgumentError, Validator.invalidDuration, caller
+    end
+    
     @numBalls = numBalls
     @ballq = loadBallQueue(numBalls)
     @orig = @ballq.clone
@@ -39,9 +46,9 @@ class BallClock
 
   def runClock()
     if @mode == :reportdays
-      simulateDays()
+      return simulateDays()
     else
-      simulateDuration()
+      return simulateDuration()
     end
   end
   
@@ -56,7 +63,7 @@ class BallClock
     end
     
     @fullDays = @halfDays / 2
-    puts "#{@numBalls} balls cycle for #{@fullDays} days."
+    return "#{@numBalls} balls cycle for #{@fullDays} days."
   end
   private :simulateDays
   
@@ -69,7 +76,7 @@ class BallClock
     end
     result = {:Min => @minTrack, :FiveMin => @fiveMinTrack, :Hour => @hourTrack, :Main => @ballq}
     json = result.to_json
-    puts "#{json}"
+    return "#{json}"
   end
   private :simulateDuration
   
@@ -135,27 +142,54 @@ class BallClock
     return output
   end
 
-  
 end
 
-def validInput?(input)
-  if input == 0 or input < 27 or input > 127
-    return false
+class Validator
+  @@min = 27
+  @@max = 127
+  
+  def self.validBallInput?(input)
+    if input.is_a? String
+      return false
+    end
+    if input == 0 or input < @@min or input > @@max
+      return false
+    end
+    return true
   end
-  return true
+
+  def self.validDuration?(input)
+    if input.is_a? String
+      return false
+    end
+
+    if input < 0
+      return false
+    end
+    return true
+  end
+  
+  def self.invalidBallInput
+    return "The first parameter must be a number between 27 and 127"
+  end
+  
+  def self.invalidDuration
+    return "The second parameter must be a number greater than 0"
+  end
 end
+
 
 if __FILE__ == $0
   numBalls = (ARGV[0] || 0).to_i
   
-  if not validInput?(numBalls)
-    puts "The first parameter must be a number between 27 and 127"
-    exit(false)
+  if not Validator.validBallInput?(numBalls)
+    puts Validator.invalidBallInput
+    exit 1
   end
 
   duration = (ARGV[1] || 0).to_i
  
   ballClock = BallClock.new(numBalls, duration)
-  ballClock.runClock()
+  puts ballClock.runClock()
   
 end 
